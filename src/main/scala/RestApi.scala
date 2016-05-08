@@ -1,4 +1,4 @@
-import GamesManager.{Game, Games, GetGames}
+import GamesManager.{CreateGame, Game, Games, GetGames}
 import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.server.Directives._
 import akka.pattern.ask
@@ -13,19 +13,26 @@ class RestApi(system: ActorSystem, timeout: Timeout) extends GameMarshalling {
 
   lazy val gamesManager = createGamesManager()
 
-
-  def routes = eventsRoute
+  def routes = gameGetRoute
 
   def getGames() =
     gamesManager.ask(GetGames).mapTo[Games]
 
-  def eventsRoute =
+  def createGame(home: String, away: String) =
+    gamesManager.ask(CreateGame(home, away)).mapTo[Game]
+
+  def gameGetRoute =
     pathPrefix("games") {
       pathEndOrSingleSlash {
         get {
-          // GET /games
           onSuccess(getGames()) {
             case games => complete(games)
+          }
+        } ~
+        post {
+          entity(as[Game]) { game =>
+            onSuccess(createGame(game.home, game.away)) { game =>
+              complete(game)}
           }
         }
       }

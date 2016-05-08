@@ -20,13 +20,23 @@ class RestApiIntegrationSpec extends WordSpec with Matchers with ScalatestRouteT
 
   "The football score API" must {
     "return games" in  {
-      restApi.getGames()
       val expectedGames = Games(Vector.empty :+ Game("Juventus", "Sampdoria"))
       Get("/games") ~> restApi.routes ~> check {
         responseEntity shouldEqual HttpEntity(`application/json`, expectedGames.toJson.prettyPrint)
         status.isSuccess() shouldEqual true
       }
+    }
 
+    "creates a game" in {
+      val home: String = "test-home"
+      val away: String = "test-away"
+      val request = Game(home, away).toJson
+      val expectedResponse = request.prettyPrint
+
+      Post("/games", request) ~> restApi.routes ~> check {
+        responseEntity shouldEqual HttpEntity(`application/json`, expectedResponse)
+        status.isSuccess() shouldEqual true
+      }
     }
   }
 

@@ -1,7 +1,7 @@
 /**
   * Created by cosimoranieri on 07/05/2016.
   */
-import GamesManager.{Game, Games, GetGames}
+import GamesManager.{CreateGame, Game, Games, GetGames}
 import akka.actor._
 import akka.util.Timeout
 
@@ -12,7 +12,8 @@ object GamesManager {
   def name = "gamesManager"
   case class Game(home: String, away: String)
   case class Games(games: Vector[Game])
-  case object GetGames //<co id="ch02_get_events"/
+  case object GetGames
+  case class CreateGame(home: String, away: String)
 }
 
 class GamesManager(implicit timeout: Timeout) extends Actor {
@@ -35,6 +36,19 @@ class GamesManager(implicit timeout: Timeout) extends Actor {
         p.future
       }
       pipe(games) to sender()
+    }
+
+    case CreateGame(home, away) => {
+      import akka.pattern.pipe
+      def game: Future[Game] = {
+        val p = Promise[Game]()
+        Future {
+          val game = Game(home, away)
+          p.success(game)
+        }
+        p.future
+      }
+      pipe(game) to sender()
     }
   }
 }
