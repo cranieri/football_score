@@ -26,28 +26,27 @@ class GamesManager(implicit timeout: Timeout) extends Actor {
     case GetGames => {
       import akka.pattern.pipe
 
-      def games: Future[Games] = {
+      def gamesFuture: Future[Games] = {
         val p = Promise[Games]()
         Future {
           println("Fetching games")
-          val games: Games = Games(Vector.empty :+ Game("Juventus", "Sampdoria"))
-          p.success(games)
+          p.success(Games(games))
           println("Returned games")
         }
         println("outside future")
         p.future
       }
-      pipe(games) to sender()
+      pipe(gamesFuture) to sender()
     }
 
     case CreateGame(home, away) => {
       import akka.pattern.pipe
-      def game: Future[Vector[Game]] = {
-        val p = Promise[Vector[Game]]()
+      def game: Future[Game] = {
+        val p = Promise[Game]()
         Future {
           val game = Game(home, away)
           games = games :+ game
-          p.success(games)
+          p.success(game)
         }
         p.future
       }

@@ -19,7 +19,7 @@ class RestApi(system: ActorSystem, timeout: Timeout) extends GameMarshalling {
     gamesManager.ask(GetGames).mapTo[Games]
 
   def createGame(home: String, away: String) =
-    gamesManager.ask(CreateGame(home, away)).mapTo[Vector[Game]]
+    gamesManager.ask(CreateGame(home, away)).mapTo[Game]
 
   def gameGetRoute =
     pathPrefix("games") {
