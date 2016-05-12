@@ -20,6 +20,8 @@ class GamesManager(implicit timeout: Timeout) extends Actor {
 
   implicit val ec = context.dispatcher
 
+  var games = Vector.empty[Game]
+
   def receive = {
     case GetGames => {
       import akka.pattern.pipe
@@ -40,11 +42,12 @@ class GamesManager(implicit timeout: Timeout) extends Actor {
 
     case CreateGame(home, away) => {
       import akka.pattern.pipe
-      def game: Future[Game] = {
-        val p = Promise[Game]()
+      def game: Future[Vector[Game]] = {
+        val p = Promise[Vector[Game]]()
         Future {
           val game = Game(home, away)
-          p.success(game)
+          games = games :+ game
+          p.success(games)
         }
         p.future
       }
