@@ -1,4 +1,5 @@
-import GamesManager.{CreateGame, Game, Games, GetGames}
+import GameActor.GameScore
+import GamesManager._
 import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.server.Directives._
 import akka.pattern.ask
@@ -13,13 +14,22 @@ class RestApi(system: ActorSystem, timeout: Timeout) extends GameMarshalling {
 
   lazy val gamesManager = createGamesManager()
 
-  def routes = gameGetRoute
+  def routes = gameGetRoute ~ scoreRoute
 
   def getGames() =
     gamesManager.ask(GetGames).mapTo[Games]
 
   def createGame(home: String, away: String) =
     gamesManager.ask(CreateGame(home, away)).mapTo[Game]
+
+  def addGame(home: String, away: String) =
+    gamesManager.ask(AddGame(home, away)).mapTo[Game]
+
+  def getScore(home: String, away: String) =
+    gamesManager.ask(GamesManager.GetScore(home, away)).mapTo[GameActor.GameScore]
+
+  def addScore(home: String, away: String, homeScore:String, awayScore:String) =
+    gamesManager.ask(GamesManager.AddScore(home, away, homeScore, awayScore)).mapTo[GameActor.GameScore]
 
   def gameGetRoute =
     pathPrefix("games") {
@@ -31,8 +41,31 @@ class RestApi(system: ActorSystem, timeout: Timeout) extends GameMarshalling {
         } ~
         post {
           entity(as[Game]) { game =>
-            onSuccess(createGame(game.home, game.away)) { game =>
+            onSuccess(addGame(game.home, game.away)) { game =>
               complete(game)}
+          }
+        }
+      }
+    }
+
+  def scoreRoute =
+    pathPrefix("scores" / Segment) { game =>
+      pathEndOrSingleSlash {
+        get {
+          val gameParam = game.split('-')
+          val home = gameParam(0)
+          val away = gameParam(1)
+          onSuccess(getScore(home, away)) {
+            case score => complete(score)
+          }
+        } ~
+        post {
+          val gameParam = game.split('-')
+          val home = gameParam(0)
+          val away = gameParam(1)
+          entity(as[GameScore]) { gameScore =>
+            onSuccess(addScore(home, away, gameScore.homeScore, gameScore.awayScore)) { score =>
+              complete(score)}
           }
         }
       }
