@@ -14,6 +14,7 @@ object GameActor {
   sealed trait Command
   case class AddScore(homeScore:String, awayScore:String) extends Command
   case object GetScore
+  case object GetGame
 
   case object GameExists
 
@@ -44,6 +45,7 @@ class GameActor(home:String, away:String) extends PersistentActor {
       println(" GameActor get score")
       sender() ! score
     }
+    case GetGame => sender() ! Some(GamesManager.Game(home, away))
   }
 
   private val updateState: (Event => Unit) = {

@@ -16,6 +16,7 @@ object GamesManager {
   case class Game(home: String, away: String) extends Command
   case class Games(games: Vector[Game]) extends Command
   case object GetGames
+  case class GetGame(name:String)
   case class CreateGame(home: String, away: String) extends Command
   case class AddGame(home: String, away:String)
   case class AddScore(home:String, away:String, homeScore:String, awayScore:String)
@@ -28,7 +29,6 @@ object GamesManager {
 }
 
 class GamesManager(implicit timeout: Timeout) extends PersistentActor {
-
   implicit val ec = context.dispatcher
 
   var games = Vector.empty[Game]
@@ -47,7 +47,7 @@ class GamesManager(implicit timeout: Timeout) extends PersistentActor {
   val receiveCommand: Receive = {
     case CreateGame(home, away) => persist(GameCreated(home, away))(updateState)
     case AddGame(home, away) => {
-      val childName = s"$home$away"
+      val childName = s"$home-$away"
       context.child(childName) match {
           case Some(child) =>
           case None => context.actorOf(GameActor.props(home, away), childName)
@@ -55,7 +55,7 @@ class GamesManager(implicit timeout: Timeout) extends PersistentActor {
       sender() ! Game(home, away)
     }
     case AddScore(home, away, homeScore, awayScore) => {
-      context.child(s"$home$away") match {
+      context.child(s"$home-$away") match {
         case Some(child) => {
           println(s"Found child $home$away")
           child forward GameActor.AddScore(homeScore, awayScore)
@@ -65,12 +65,19 @@ class GamesManager(implicit timeout: Timeout) extends PersistentActor {
     }
 
     case GetScore(home, away) => {
-      context.child(s"$home$away") match {
+      context.child(s"$home-$away") match {
         case Some(child) => child forward GameActor.GetScore
         case None =>
       }
     }
+
+    case GetGame(name) => {
+      def notFound() = sender() ! None
+      def getEvent(child: ActorRef) = child forward GameActor.GetGame
+      context.child(name).fold(notFound())(getEvent)
+    }
     case GetGames => {
+      import akka.pattern.ask
       import akka.pattern.pipe
 
       def gamesFuture: Future[Games] = {
@@ -83,7 +90,16 @@ class GamesManager(implicit timeout: Timeout) extends PersistentActor {
         println("outside future")
         p.future
       }
-      pipe(gamesFuture) to sender()
+
+      def getGames = context.children.map { child =>
+        self.ask(GetGame(child.path.name)).mapTo[Option[Game]] //<co id="ch02_ask_event"/>
+      }
+      def convertToGames(f: Future[Iterable[Option[Game]]]) =
+        f.map(_.flatten).map(l=> Games(l.toVector)) //<co id="ch02_flatten_options"/>
+
+
+      pipe(convertToGames(Future.sequence(getGames))) to sender()
+//      pipe(gamesFuture) to sender()
     }
   }
 

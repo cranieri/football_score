@@ -1,6 +1,8 @@
 name := "FootballScore"
+
 version := "1.0"
-scalaVersion := "2.11.4"
+
+scalaVersion := "2.11.7"
 
 organization := "com.footballscores" //<co id="example-app-info"/>
 
@@ -9,7 +11,7 @@ resolvers ++= Seq("Typesafe Repository" at "http://repo.typesafe.com/typesafe/re
 
 
 libraryDependencies ++= {
-  val akkaVersion       = "2.4.4" //<co id="akkaVersion"/>
+  val akkaVersion       = "2.4.6" //<co id="akkaVersion"/>
   val sprayVersion      = "1.3.3"
   Seq(
     "com.typesafe.akka" %% "akka-actor"      % akkaVersion, //<co id="actorDep"/>
