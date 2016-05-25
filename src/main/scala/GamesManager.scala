@@ -26,6 +26,7 @@ object GamesManager {
 
   sealed trait Event
   case class GameCreated(home: String, away: String) extends Event
+  case class GameAdded(home: String, away: String) extends Event
 }
 
 class GamesManager(implicit timeout: Timeout) extends PersistentActor {
@@ -39,20 +40,17 @@ class GamesManager(implicit timeout: Timeout) extends PersistentActor {
 
   def receiveRecover = {
     case event:Event => {
-//      nrEventsRecovered = nrEventsRecovered + 1
       updateState(event)
     }
   }
 
   val receiveCommand: Receive = {
-    case CreateGame(home, away) => persist(GameCreated(home, away))(updateState)
     case AddGame(home, away) => {
       val childName = s"$home-$away"
       context.child(childName) match {
-          case Some(child) =>
-          case None => context.actorOf(GameActor.props(home, away), childName)
+          case Some(child) => Game(home, away)
+          case None => persist(GameAdded(home, away))(updateState)
       }
-      sender() ! Game(home, away)
     }
     case AddScore(home, away, homeScore, awayScore) => {
       context.child(s"$home-$away") match {
@@ -99,23 +97,25 @@ class GamesManager(implicit timeout: Timeout) extends PersistentActor {
 
 
       pipe(convertToGames(Future.sequence(getGames))) to sender()
-//      pipe(gamesFuture) to sender()
     }
   }
 
   private val updateState: (Event => Unit) = {
-    case GameCreated(home, away) =>  {
+    case GameAdded(home, away) =>  {
+
       import akka.pattern.pipe
-      def game: Future[Game] = {
+      def createGame: Future[Game] = {
         val p = Promise[Game]()
         Future {
-          val game = Game(home, away)
-          games = games :+ game
-          p.success(game)
+          val gameChild = context.actorOf(GameActor.props(home, away), s"$home-$away")
+          val game = gameChild.path.name.split("-")
+
+          p.success(Game(game(0), game(1)))
         }
         p.future
       }
-      pipe(game) to sender()
+      pipe(createGame) to sender()
+
     }
 
   }

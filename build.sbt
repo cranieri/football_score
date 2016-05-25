@@ -37,7 +37,9 @@ libraryDependencies ++= {
     "io.spray"                  %%  "spray-can"                      % sprayVersion,
     "io.spray"                  %%  "spray-routing"                  % sprayVersion,
     "org.iq80.leveldb"            % "leveldb"          % "0.7",
-  "org.fusesource.leveldbjni"   % "leveldbjni-all"   % "1.8"
+  "org.fusesource.leveldbjni"   % "leveldbjni-all"   % "1.8",
+    "mysql" % "mysql-connector-java" % "5.1.12",
+    "com.github.dnvriend" %% "akka-persistence-jdbc" % "2.2.23"
   )
 }
 
