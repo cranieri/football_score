@@ -1,4 +1,4 @@
-import GameActor.GameScore
+import Game.GameScore
 import GamesManager._
 import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.server.Directives._
@@ -20,16 +20,16 @@ class RestApi(system: ActorSystem, timeout: Timeout) extends GameMarshalling {
     gamesManager.ask(GetGames).mapTo[Games]
 
   def createGame(home: String, away: String) =
-    gamesManager.ask(CreateGame(home, away)).mapTo[Game]
+    gamesManager.ask(CreateGame(home, away)).mapTo[GamesManager.Game]
 
   def addGame(home: String, away: String) =
-    gamesManager.ask(AddGame(home, away)).mapTo[Game]
+    gamesManager.ask(AddGame(home, away)).mapTo[GamesManager.Game]
 
   def getScore(home: String, away: String) =
-    gamesManager.ask(GamesManager.GetScore(home, away)).mapTo[GameActor.GameScore]
+    gamesManager.ask(GamesManager.GetScore(home, away)).mapTo[Game.GameScore]
 
   def addScore(home: String, away: String, homeScore:String, awayScore:String) =
-    gamesManager.ask(GamesManager.AddScore(home, away, homeScore, awayScore)).mapTo[GameActor.GameScore]
+    gamesManager.ask(GamesManager.AddScore(home, away, homeScore, awayScore)).mapTo[Game.GameScore]
 
   def gameGetRoute =
     pathPrefix("games") {
@@ -40,7 +40,7 @@ class RestApi(system: ActorSystem, timeout: Timeout) extends GameMarshalling {
           }
         } ~
         post {
-          entity(as[Game]) { game =>
+          entity(as[GamesManager.Game]) { game =>
             onSuccess(addGame(game.home, game.away)) { game =>
               complete(game)}
           }

@@ -1,4 +1,4 @@
-import GameActor._
+import Game._
 import akka.actor.Props
 import akka.persistence.PersistentActor
 import scala.concurrent.{Future, Promise}
@@ -7,8 +7,8 @@ import scala.concurrent.{Future, Promise}
   * Created by cosimoranieri on 23/05/2016.
   */
 
-object GameActor {
-  def props(home:String, away:String) = Props(new GameActor(home, away))
+object Game {
+  def props(home:String, away:String) = Props(new Game(home, away))
   def name = "gamesManager"
 
   sealed trait Command
@@ -24,14 +24,13 @@ object GameActor {
 }
 
 
-class GameActor(home:String, away:String) extends PersistentActor {
+class Game(home:String, away:String) extends PersistentActor {
   override def persistenceId = s"${self.path.name}"
   implicit val ec = context.dispatcher
 
   var score = GameScore()
   def receiveRecover = {
     case event:Event => {
-      //      nrEventsRecovered = nrEventsRecovered + 1
       updateState(event)
     }
   }
