@@ -3,7 +3,6 @@
   */
 import GamesManager._
 import akka.actor._
-import akka.persistence._
 import akka.util.Timeout
 
 import scala.concurrent.{Future, Promise}
@@ -39,7 +38,7 @@ class GamesManager(implicit timeout: Timeout) extends Actor {
     case AddGame(home, away) => {
       val childName = s"$home-$away"
       context.child(childName) match {
-          case Some(child) => GamesManager.Game(home, away)
+          case Some(child) => sender() ! GamesManager.Game(home, away)
           case None => {
             import akka.pattern.pipe
             def createGame: Future[GamesManager.Game] = {
@@ -83,11 +82,10 @@ class GamesManager(implicit timeout: Timeout) extends Actor {
       import akka.pattern.pipe
 
       def getGames = context.children.map { child =>
-        self.ask(GetGame(child.path.name)).mapTo[Option[GamesManager.Game]] //<co id="ch02_ask_event"/>
+        self.ask(GetGame(child.path.name)).mapTo[Option[GamesManager.Game]]
       }
       def convertToGames(f: Future[Iterable[Option[GamesManager.Game]]]) =
-        f.map(_.flatten).map(l=> Games(l.toVector)) //<co id="ch02_flatten_options"/>
-
+        f.map(_.flatten).map(l=> Games(l.toVector))
 
       pipe(convertToGames(Future.sequence(getGames))) to sender()
     }

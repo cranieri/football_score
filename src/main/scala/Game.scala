@@ -1,6 +1,5 @@
 import Game._
 import akka.actor.{Actor, Props}
-import akka.persistence.PersistentActor
 import scala.concurrent.{Future, Promise}
 
 /**
@@ -11,7 +10,6 @@ object Game {
   def props(home:String, away:String) = Props(new Game(home, away))
   def name = "gamesManager"
 
-//  sealed trait Command
   case class AddScore(homeScore:String, awayScore:String)
   case object GetScore
   case object GetGame
