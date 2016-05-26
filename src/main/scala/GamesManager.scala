@@ -79,10 +79,10 @@ class GamesManager(implicit timeout: Timeout) extends PersistentActor {
       import akka.pattern.pipe
 
       def getGames = context.children.map { child =>
-        self.ask(GetGame(child.path.name)).mapTo[Option[GamesManager.Game]] //<co id="ch02_ask_event"/>
+        self.ask(GetGame(child.path.name)).mapTo[Option[GamesManager.Game]]
       }
       def convertToGames(f: Future[Iterable[Option[GamesManager.Game]]]) =
-        f.map(_.flatten).map(l=> Games(l.toVector)) //<co id="ch02_flatten_options"/>
+        f.map(_.flatten).map(l=> Games(l.toVector))
 
 
       pipe(convertToGames(Future.sequence(getGames))) to sender()
