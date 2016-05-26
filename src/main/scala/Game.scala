@@ -35,7 +35,7 @@ class Game(home:String, away:String) extends PersistentActor {
     }
   }
 
-  val receiveCommand: Receive = {
+  def receiveCommand = {
     case AddScore(home, away) => {
       println(s"Added score $home$away")
       persist(ScoreAdded(home, away))(updateState)

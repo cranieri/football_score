@@ -25,7 +25,6 @@ object GamesManager {
   case object GameExists
 
   sealed trait Event
-  case class GameCreated(home: String, away: String) extends Event
   case class GameAdded(home: String, away: String) extends Event
 }
 
@@ -44,11 +43,11 @@ class GamesManager(implicit timeout: Timeout) extends PersistentActor {
     }
   }
 
-  val receiveCommand: Receive = {
+  def receiveCommand = {
     case AddGame(home, away) => {
       val childName = s"$home-$away"
       context.child(childName) match {
-          case Some(child) => GamesManager.Game(home, away)
+          case Some(child) => sender() ! GamesManager.Game(home, away)
           case None => persist(GameAdded(home, away))(updateState)
       }
     }
